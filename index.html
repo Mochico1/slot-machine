@@ -16,13 +16,13 @@
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      margin: 0; 
+      margin: 0;
       padding: 0;
     }
     .slot-machine {
       background: linear-gradient(135deg, #ffcc00, #ff6600);
       margin: 50px auto;
-      width: 300px; 
+      width: 320px; 
       padding: 20px;
       border-radius: 15px;
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
@@ -33,26 +33,27 @@
       display: flex;
       justify-content: center;
       font-size: 40px;
-      margin-bottom: 20px;
+      margin: 0 auto 20px auto;
       background: black;
       border-radius: 10px;
       overflow: hidden;
-      width: 240px;
-      height: 80px;   /* On ne voit qu'un «hublot» de 80px */
+      width: 260px;
+      height: 80px;
       border: 3px solid gold;
-      margin: 0 auto 20px auto;
     }
     .reel {
-      width: 60px;   /* Un rouleau fait 60px de large */
-      height: 80px;  /* et 80px de haut, identique au conteneur. */
+      width: 60px;
+      height: 80px;
       position: relative;
       overflow: hidden;
       margin: 0 2px;
     }
+    /* On va empiler ~30 symboles, chacun faisant 60px de hauteur. */
     .symbol-container {
       position: absolute;
       width: 100%;
-      /* On va empiler 11 symboles en colonne => 11 * 60px de hauteur = 660px */
+      display: flex;
+      flex-direction: column;
     }
     .symbol {
       width: 100%;
@@ -63,7 +64,6 @@
       font-size: 40px;
       background: #333;
       border-radius: 5px;
-      margin-top: 0;
     }
     .spin-btn {
       padding: 15px 30px;
@@ -86,8 +86,8 @@
     .spin-btn:disabled {
       background: gray;
       cursor: not-allowed;
-      transform: none;
       box-shadow: none;
+      transform: none;
     }
   </style>
 </head>
@@ -97,9 +97,10 @@
   <script type="text/babel">
     function SlotMachine() {
       const symbols = ['🍒','🍋','🍊','🍉','⭐','🔔','💎'];
+      // reels : tableau de 3 colonnes, chacune = liste de symboles
       const [reels, setReels] = React.useState([
-        ['🍒','🍋','🍊'], 
-        ['🍉','⭐','🔔'], 
+        ['🍒','🍋','🍊'],
+        ['🍉','⭐','🔔'],
         ['💎','🍒','🍋']
       ]);
       const [spinning, setSpinning] = React.useState(false);
@@ -108,63 +109,62 @@
       function spin() {
         if (spinning) return;
         setSpinning(true);
-        // Incrémente le nombre de spins
         setSpinCount(prev => prev + 1);
 
-        // 50% de chance de gagner
+        // 50% de chance de gagner (1 spin sur 2)
         const isWin = (spinCount % 2 === 1);
 
-        // On va créer 11 symboles par rouleau : 10 en défilement + 1 final
-        // => L'animation partira du symbole 0 à 9, et le 10e sera celui qui s'arrête
+        // Générer pour chaque rouleau un tableau de 30 symboles aléatoires
+        // + 1 symbole final (soit identique pour un gain, soit aléatoire)
         let newReels = [[], [], []];
-
         for (let i = 0; i < 3; i++) {
-          // 10 symboles aléatoires pour le «défilement»
-          for (let j = 0; j < 10; j++) {
+          // 29 symboles aléatoires pour le défilement
+          for (let j = 0; j < 29; j++) {
             newReels[i].push(symbols[Math.floor(Math.random() * symbols.length)]);
           }
         }
 
-        // Détermine le dernier symbole (final) pour chaque rouleau
         if (isWin) {
-          // Gagnant => Même symbole sur les 3 rouleaux
-          const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-          newReels = newReels.map(() => [...newReels[0], winningSymbol]);
-          // On remplit chaque rouleau à 11 items (les 10 random + 1 final identique)
+          // Même symbole final sur les 3 rouleaux
+          let winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+          newReels = newReels.map(reel => {
+            return [...reel, winningSymbol];
+          });
         } else {
-          // Perdu => symboles aléatoires
+          // 3 symboles finaux aléatoires différents
           for (let i = 0; i < 3; i++) {
             newReels[i].push(symbols[Math.floor(Math.random() * symbols.length)]);
           }
         }
 
-        // Met à jour l'état => affichera les 11 symboles
+        // On met à jour l'état => 30 symboles par rouleau
         setReels(newReels);
 
-        // Lance l'animation GSAP : fait défiler de 0px à -600px (10 * 60px)
-        // Ainsi, le 11ème symbole se retrouvera en haut du «hublot».
-        setTimeout(() => {
+        // Lance l'animation GSAP : fait défiler de y=0 à y = -(29 * 60)
+        // => 29 = length - 1, donc on finit pile sur le 30ᵉ symbole (index 29).
+        requestAnimationFrame(() => {
           document.querySelectorAll('.symbol-container').forEach((reelElem, index) => {
             gsap.fromTo(reelElem, 
               { y: 0 }, 
               { 
-                y: -600, 
-                duration: 2, 
-                ease: 'power2.out', 
+                y: -(newReels[index].length - 1) * 60, 
+                duration: 3.5, 
+                ease: 'power2.out',
                 onComplete: () => {
-                  // Animation terminée => on autorise à relancer un spin
+                  // Animation terminée => on peut relancer un spin
                   setSpinning(false);
                 }
               }
             );
           });
-        }, 50);
+        });
       }
 
       return (
         <div className="slot-machine">
           <h2>🎰 Slot Machine 🎰</h2>
           <div className="reels">
+            {/* Affichage de 3 colonnes (reels) */}
             {reels.map((col, colIndex) => (
               <div key={colIndex} className="reel">
                 <div className="symbol-container">
