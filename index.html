@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            background: radial-gradient(circle, #222, black);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .slot-machine {
+            background: linear-gradient(135deg, #ffcc00, #ff6600);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+            width: 300px;
+            margin: 50px auto;
+            border: 5px solid gold;
+            text-align: center;
+            position: relative;
+        }
+        .reels {
+            display: flex;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: black;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 240px;
+            height: 80px;
+            border: 3px solid gold;
+        }
+        .reel {
+            width: 60px;
+            height: 80px;
+            overflow: hidden;
+            position: relative;
+        }
+        .symbol-container {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            width: 100%;
+            transition: transform 1s ease-out;
+        }
+        .symbol {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            background: #333;
+            border-radius: 5px;
+        }
+        .spin-btn {
+            padding: 15px 30px;
+            background: gold;
+            color: black;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.3s;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.7);
+        }
+        .spin-btn:hover {
+            transform: scale(1.1);
+        }
+        .spin-btn:active {
+            transform: scale(0.9);
+        }
+        .spin-btn:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function SlotMachine() {
+            const symbols = ['🍒', '🍋', '🍊', '🍉', '⭐', '🔔', '💎'];
+            const [reels, setReels] = React.useState([
+                ['🍒', '🍋', '🍊'],
+                ['🍉', '⭐', '🔔'],
+                ['💎', '🍒', '🍋']
+            ]);
+            const [spinning, setSpinning] = React.useState(false);
+            const [spinCount, setSpinCount] = React.useState(0);
+
+            function spin() {
+                if (spinning) return;
+                setSpinning(true);
+                setSpinCount(prev => prev + 1);
+
+                let win = spinCount % 2 === 1; // 50% de chances de gagner
+                let tempReels = [[], [], []];
+
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        tempReels[i].push(symbols[Math.floor(Math.random() * symbols.length)]);
+                    }
+                }
+
+                setReels(tempReels);
+
+                // Appliquer l'animation GSAP
+                document.querySelectorAll(".symbol-container").forEach((reel, index) => {
+                    gsap.to(reel, {
+                        y: -600, // Défilement vers le haut
+                        duration: 2,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            let finalReels;
+                            if (win) {
+                                let winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                                finalReels = [[winningSymbol], [winningSymbol], [winningSymbol]];
+                            } else {
+                                finalReels = [
+                                    [symbols[Math.floor(Math.random() * symbols.length)]],
+                                    [symbols[Math.floor(Math.random() * symbols.length)]],
+                                    [symbols[Math.floor(Math.random() * symbols.length)]]
+                                ];
+                            }
+                            setReels(finalReels);
+                            setSpinning(false);
+                        }
+                    });
+                });
+            }
+
+            return (
+                <div className="slot-machine">
+                    <h2>🎰 Slot Machine 🎰</h2>
+                    <div className="reels">
+                        {reels.map((col, colIndex) => (
+                            <div key={colIndex} className="reel">
+                                <div className="symbol-container" style={{ transform: `translateY(0px)` }}>
+                                    {col.map((symbol, rowIndex) => (
+                                        <div key={rowIndex} className="symbol">{symbol}</div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <button className="spin-btn" onClick={spin} disabled={spinning}>
+                        {spinning ? '🎲 Spinning...' : 'Spin 🎲'}
+                    </button>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<SlotMachine />, document.getElementById('root'));
+    </script>
+</body>
+</html>
