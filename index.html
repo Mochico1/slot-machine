@@ -115,29 +115,22 @@
 
                 setReels(tempReels);
 
-                // Appliquer l'animation GSAP
-                document.querySelectorAll(".symbol-container").forEach((reel, index) => {
-                    gsap.to(reel, {
-                        y: -600, // Défilement vers le haut
-                        duration: 2,
-                        ease: "power2.out",
-                        onComplete: () => {
-                            let finalReels;
-                            if (win) {
-                                let winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-                                finalReels = [[winningSymbol], [winningSymbol], [winningSymbol]];
-                            } else {
-                                finalReels = [
-                                    [symbols[Math.floor(Math.random() * symbols.length)]],
-                                    [symbols[Math.floor(Math.random() * symbols.length)]],
-                                    [symbols[Math.floor(Math.random() * symbols.length)]]
-                                ];
-                            }
-                            setReels(finalReels);
-                            setSpinning(false);
-                        }
-                    });
-                });
+                // Correction du bug d'affichage noir
+                setTimeout(() => {
+                    let finalReels;
+                    if (win) {
+                        let winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                        finalReels = [[winningSymbol], [winningSymbol], [winningSymbol]];
+                    } else {
+                        finalReels = [
+                            [symbols[Math.floor(Math.random() * symbols.length)]],
+                            [symbols[Math.floor(Math.random() * symbols.length)]],
+                            [symbols[Math.floor(Math.random() * symbols.length)]]
+                        ];
+                    }
+                    setReels(finalReels);
+                    setSpinning(false);
+                }, 2500);
             }
 
             return (
